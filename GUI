@@ -1,5 +1,6 @@
 from tkinter import *
 from PIL import Image, ImageDraw
+import HandwritingNN-V1 as trainNeuralNetwork
 
 IMAGES = 10
 
@@ -42,7 +43,7 @@ class GUI(Frame):
             self.title = Label(self.master, text = "Write something! Anything! In print, and something different each time. (Testing Image {}/{})".format(i+1, IMAGES))
             self.title.grid(row = 0, column = 0, sticky = E+W+N)
             self.writingScreen(username, i)
-        self.trainNN(self.users)
+        trainNeuralNetwork(self.users)
         self.mainMenu()
 
     #lets the user draw on the screen while creating an identical image in memory to be saved as a .png
@@ -92,9 +93,6 @@ class GUI(Frame):
 
     def determineUserNN(self, image):
         return "lol you think I can program a neural network"
-
-    def trainNN(self, users):
-        pass
 
 #####################################################
 
