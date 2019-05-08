@@ -1,0 +1,147 @@
+import numpy as np
+np.random.seed(123)  # for reproducibility
+from keras.applications.vgg16 import preprocess_input
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Convolution2D, MaxPooling2D
+from keras.preprocessing.image import img_to_array
+from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
+import cv2
+from keras.utils import to_categorical
+
+import LoadPredictCharacter
+
+IMAGES = 10
+data = []
+labels = []
+words = [[]]
+letters = 0
+
+currentWord = 0
+users = ["HAYLEY", "hannah"]#, "ashley"] #, "TYLER"]
+
+for user in users:
+        for i in range(IMAGES):
+
+                imagePath = user + "/" + user + str(i+1) + ".png"
+
+                im = cv2.imread(imagePath)
+                kernel = np.ones((5,5),np.uint8)
+                               
+                im[im == 255] = 1
+                im[im == 0] = 255
+                im[im == 1] = 0
+                im = cv2.dilate(im,kernel,iterations = 1)
+                cv2.imwrite(user+"/dilation"+str(i+1)+".png", im)
+                im2 = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
+                ret,thresh = cv2.threshold(im2,127,255,0)
+                contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+                for i in range(0, len(contours)):
+                        cnt = contours[i]
+                        x,y,w,h = cv2.boundingRect(cnt)
+                        letter = im[y:y+h,x:x+w]
+                        cv2.imwrite(user+"/letter"+str(i)+".png", letter)
+                        letterImage = cv2.imread(user + "/letter"+str(i)+".png")
+                        letterImage = cv2.resize(letterImage, (28, 28))
+                        letters += 1
+                        data.append(letterImage)
+                        prediction = LoadPredictCharacter.predict(letterImage)
+                        labels.append([user, prediction])
+                        words[currentWord].append(letterImage)
+                # im_bw = cv2.cvtColor(dilation, cv2.COLOR_RGB2GRAY)
+                # ret,thresh1 = cv2.threshold(im_bw,127,255,cv2.THRESH_BINARY)
+                # contours, hierarchy = cv2.findContours(im_bw, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+                # for cnt in contours:
+                #         x,y,w,h = cv2.boundingRect(cnt)
+                #         cv2.rectangle(dilation,(x,y),(x+w,y+h),(0,255,0),3)
+
+                # i=0
+                # for cnt in contours:
+                #         x,y,w,h = cv2.boundingRect(cnt)
+                #         cv2.imwrite(user+"/letter"+str(i)+".png", thresh1[y:y+h,x:x+w])
+                #         letterImage = cv2.imread(user + "/letter"+str(i)+".png")
+                #         letterImage = cv2.resize(letterImage, (28, 28))
+                #         letters += 1
+                #         data.append(letterImage)
+                #         labels.append(user)
+                #         words[currentWord].append(letterImage)
+                #         i += 1
+                #        currentWord += 1
+                #        words.append([])              
+                #        
+                
+        currentWord += 1
+        words.append([])
+                
+      
+data = np.array(data, dtype="float32")/ 255.0
+#data = (np.expand_dims(data,len(data)))
+labels = np.array(labels)
+#labels = (np.expand_dims(labels,len(labels)))
+
+mlb = preprocessing.MultiLabelBinarizer()
+transformed_label = mlb.fit_transform(labels)
+#multilabel_binarizer = preprocessing.MultiLabelBinarizer()
+#multilabel_binarizer.fit(labels)
+#y = multilabel_binarizer.classes_
+
+#data = data.transpose()
+
+X_train, X_test, y_train, y_test = train_test_split(data, transformed_label, test_size=0.20, random_state=111)
+
+y_train =to_categorical(y_train,len(users))
+y_train = y_train[:, 0, :]
+y_test = to_categorical(y_test, len(users))
+y_test = y_test[:, 0, :]
+
+model = Sequential()
+model.add(Convolution2D(32, (3, 3), activation='relu', input_shape=(28,28,3)))
+model.add(Convolution2D(32, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Dropout(0.25))
+ 
+model.add(Flatten())
+
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(len(users), activation='sigmoid')) 
+model.compile(loss='binary_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+model.fit(X_train, y_train, 
+          batch_size=32, nb_epoch=100, verbose=1)
+
+score = model.evaluate(X_test, y_test, verbose=0)
+
+model_yaml = model.to_yaml()
+with open("model.yaml", "w") as yaml_file:
+        yaml_file.write(model_yaml)
+model.save_weights("model.h5")
+
+
+userPredict = [0, 0, 0]
+for word in words:
+        for i in range(len(userPredict)):
+                userPredict[i] = 0
+        for i in range(len(word)):
+                image = img_to_array(word[i])
+                image = np.array(image, dtype="float32")/ 255.0
+
+                image = (np.expand_dims(image,0))
+
+
+                prediction1 = model.predict(image)[0]
+                prediction1 = np.argmax(prediction1)
+                userPredict[prediction1] += 1
+        print(userPredict)
+        maximum = max(userPredict)
+        index = 0
+        for i in range(len(userPredict)):
+                if (userPredict[i] == maximum):
+                        index = i
+                        break
+        print(users[index])
