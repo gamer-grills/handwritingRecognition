@@ -27,7 +27,7 @@ for user in users:
         image = img_to_array(image)
         data.append(image)
     
-    labels.append(user)
+        labels.append(user)
 
 data = np.array(data, dtype="float32")/ 255.0
 labels = np.array(labels)
