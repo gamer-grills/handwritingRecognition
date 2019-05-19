@@ -26,7 +26,7 @@ class GUI(Frame):
         master = self.master
         self.master.attributes("-fullscreen", True)
         self.bg_color = "misty rose"
-        self.users = ["Hannah", "Hayley", "Ashley"]
+        self.users = ["Hannah", "Ashley", "Hayley"]
         self.mainMenu()
 
     #resets the GUI so that new things can be displayed on it
@@ -40,8 +40,8 @@ class GUI(Frame):
     #the main menu screen
     def mainMenu(self):
         self.reset()
-        self.title = Label(self.master, text = "Neural Network\nHandwriting Analysis", width = 200, font=("Courier",44), bg=self.bg_color).pack(side = TOP)
-        self.subtitle = Label(self.master, text = "Can you fool the computer?\n", font=("Courier",30), fg="teal", bg=self.bg_color).pack(side = TOP)
+        self.title = Label(self.master, text = "\nNeural Network\nHandwriting Analysis", width = 200, font=("Courier",44), bg=self.bg_color).pack(side = TOP)
+        self.subtitle = Label(self.master, text = "Can the computer recongnize you?\n", font=("Courier",30), fg="teal", bg=self.bg_color).pack(side = TOP)
         self.newUserButton = Button(self.master, text = "Create New User", font=("Courier",30), fg="aquamarine", bg="teal", command = self.createNewUser).pack()
         self.determineUserButton = Button(self.master, text = "Determine User", font=("Courier",30), fg="aquamarine", bg="teal", command = self.determineUserScreen).pack()
         #self.debugButton = Button(self.master, text = "DEBUG, straight to the NN baby", command = trainNeuralNetwork([])
@@ -61,17 +61,17 @@ class GUI(Frame):
         self.reset()
         self.users.append(username)
         for i in range(0, IMAGES):
-            self.title = Label(self.master, text = "Write something! Anything! In print, and something different each time. (Testing Image {}/{})".format(i+1, IMAGES), font="Courier 10", fg="teal", bg="lightpink")
+            self.title = Label(self.master, text = "Write something! Anything! In print, and something different each time. (Testing Image {}/{})".format(i+1, IMAGES), font="Courier 13", fg="teal", bg="lightpink")
             self.title.pack(side=TOP)
             self.writingScreen(username, i)
             self.reset()
         
-        label = Label(self.master, text = "Breaking your writing into letters...\n\n(This may take a bit!\nBe patient!)", font=("Courier 20"), fg="teal", bg=self.bg_color)
+        label = Label(self.master, text = "Breaking your writing into letters...\n\n(This may take a bit!\nBe patient!)\n\nThe computer finds the contours of the letters,\ndraws a rectangle around the letter,\nand saves the letter as a single image.", font=("Courier 15"), fg="teal", bg=self.bg_color)
         label.pack(expand=YES)
         self.master.update()
         data, labels, tempwords = LetterBreaker.imageProcess(self.users, IMAGES)
 
-        label.config(text = "Training neural network...\n\n(This may take a bit!\nBe patient!)")
+        label.config(text = "Training neural network...\n\n(This may take a bit!\nBe patient!)\n\nThe letters are passed to the neural network,\nwhich works similarly to the human brain.")
         self.master.update()
         nn.trainNeuralNetwork(self.users, data, labels)
         
@@ -133,7 +133,7 @@ class GUI(Frame):
         self.reset()
         self.waiting = Label(self.master, text = "Analyzing\nyour\nhandwriting...", font=("Courier 40"), fg="teal", bg=self.bg_color)
         self.waiting.pack(expand=YES)
-        explanation = Label(self.master, text = "To figure out who wrote this,\nthe computer first breaks your image up into its individual letters.\nThen, it loads the trained model.\nAnd based on that,it assigns the user it thinks\nis most similar to each letter!", font=("Courier",15), fg="teal", bg=self.bg_color).pack(side = TOP, expand=YES)
+        explanation = Label(self.master, text = "To figure out who wrote this,\nthe computer first breaks your image up\ninto its individual letters.\nThen, it loads the trained model.\nAnd based on that,it assigns the user it thinks\nis most similar to each letter!", font=("Courier",15), fg="teal", bg=self.bg_color).pack(side = TOP, expand=YES)
         self.master.update()
         self.analysisScreen()
 
@@ -155,12 +155,12 @@ class GUI(Frame):
             rankingString += "{}) {}, {}%\n".format(rank, name, int(percentage))
         
         self.guess = Label(self.master, text = "The AI thinks that\n{}\nwrote this!".format(top_user), font=("Courier 30"), fg="teal", bg=self.bg_color).pack(side = TOP)
-        self.rankingList = Label(self.master, text = rankingString, font=("Courier 20"), fg="teal", bg=self.bg_color).pack()
+        self.rankingList = Label(self.master, text = rankingString, font=("Courier 25"), fg="teal", bg=self.bg_color).pack()
         self.back = Button(self.master, text = "Return to Main Menu", font=("Courier 30"), fg="aquamarine", bg="teal", command = self.mainMenu).pack(side=BOTTOM)
 
     def determineUserNN(self, filename):
         model = self.loadModel()
-        temp = ["test"]
+        temp = ["unknown"]
         tempdata, templabels, words = LetterBreaker.imageProcess(temp, 1, filename)
         userRankings, this_user = Prediction.predictUser(model, words, self.users)
         userRankingDict = {}

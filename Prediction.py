@@ -22,8 +22,8 @@ def predictUser(model, words, users):
 
                     prediction1 = model.predict(image)[0]
                     print(prediction1)
-                    prediction1[0] -= 0.01
-                    prediction1[1] += 0.01
+                    #prediction1[0] -= 0.05
+                    #prediction1[1] += 0.005
                     print(prediction1)
                     prediction1 = np.argmax(prediction1)
                     userPredict[prediction1] += 1
@@ -38,4 +38,4 @@ def predictUser(model, words, users):
                     print(index)
                     break
             print(users)
-    return users[index]   
+    return userPredict, users[index]
